@@ -1,39 +1,38 @@
-public class JointBankAccount {
-    private int balance = 50000;    
-    public synchronized void withdraw(String user, int amount) {
-        if (balance >= amount) {
-            System.out.println(user + " is trying to withdraw " + amount);
-            balance -= amount;
-            System.out.println(user + " successfully withdrew " + amount);
-            System.out.println("Remaining balance: " + balance);
-        } else {
-            System.out.println(user + " attempted to withdraw " + amount + " but insufficient funds.");
-        }
+class PrinterJob {
+    private int totalPages = 10; 
+
+    public synchronized void calculatePages(int pagesToAdd) {
+        totalPages += pagesToAdd;
+        System.out.println("Added " + pagesToAdd + " pages to the tray. Total pages now: " + totalPages);
+        notify(); 
     }
-    public static void main(String[] args) {
-        JointBankAccount account = new JointBankAccount();
-        Thread userA = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                account.withdraw("User A", 45000);
-            }
-        });
-        Thread userB = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                account.withdraw("User B", 20000);
-            }
-        });
 
-        userA.start();
-        userB.start();
-
-        try {
-            
-            userA.join();
-            userB.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    
+    public synchronized void printPages(int pagesToPrint) {
+        while (totalPages < pagesToPrint) {
+            System.out.println("Not enough pages to print " + pagesToPrint + ". Waiting for pages to be added...");
+            try {
+                wait(); 
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.out.println("Thread interrupted.");
+            }
         }
+        totalPages -= pagesToPrint;
+        System.out.println("Printed " + pagesToPrint + " pages. Remaining pages: " + totalPages);
     }
 }
+
+public class PrinterJob_Demo {
+    public static void main(String[] args) {
+        PrinterJob printerJob = new PrinterJob();
+
+        
+        Thread calculateThread = new Thread(() -> {
+            try {
+                Thread.sleep(2000); 
+                printerJob.calculatePages(10); 
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
